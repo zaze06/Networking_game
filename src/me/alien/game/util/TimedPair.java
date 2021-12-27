@@ -3,7 +3,7 @@ package me.alien.game.util;
 import java.sql.Timestamp;
 import java.time.*;
 
-public class TimedPair<K, V> extends Pair{
+public class TimedPair<K, V> extends Pair<K, V>{
     Timestamp time;
 
     /**
@@ -26,7 +26,7 @@ public class TimedPair<K, V> extends Pair{
     public String toString() {
         return "{" +
                 "\"pairID\": 1" +
-                "\"key\": " + key.toString() +
+                ", \"key\": " + key.toString() +
                 ", \"value\": " + value.toString() +
                 ", \"time\": " + time.getTime() +
                 '}';

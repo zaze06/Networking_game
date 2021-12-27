@@ -173,7 +173,7 @@ public class Client extends JFrame implements KeyListener, MouseListener {
             dataTimer = new Timer(Delay, e -> {
                 for(Pair<Integer, JSONObject> data : displayDataIn){
                     if(data instanceof TimedPair<Integer,JSONObject>){
-                        TimedPair<Integer, JSONObject> timedPair = (TimedPair) data;
+                        TimedPair<Integer, JSONObject> timedPair = (TimedPair<Integer, JSONObject>) data;
                         if(timedPair.checkTime()){
                             displayDataIn.remove(data);
                         }
