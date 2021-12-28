@@ -186,7 +186,8 @@ public class Client extends JFrame implements KeyListener, MouseListener {
         public void doDraw(Graphics2D g2d) throws InterruptedException {
             g2d.setColor(Color.CYAN);
             g2d.drawRect(0,0,this.getWidth(),this.getHeight());
-            for(Pair<Integer, JSONObject> displayDataRaw : displayDataIn){
+            for(int i = 0; i < displayDataIn.size(); i++){
+                Pair<Integer, JSONObject> displayDataRaw = displayDataIn.get(i);
                 JSONObject displayData = displayDataRaw.getValue();
                 int x = displayData.getInt("x");
                 int y = displayData.getInt("y");
