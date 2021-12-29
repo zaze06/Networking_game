@@ -13,6 +13,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.net.Socket;
+import java.time.Instant;
 import java.util.ArrayList;
 
 import static me.alien.game.Game.VERSION;
@@ -22,6 +23,7 @@ public class Client extends JFrame implements KeyListener, MouseListener {
     ArrayList<Pair<Integer, Data>> dataOut;
     ArrayList<JSONObject> dataIn;
     Display display;
+    javax.swing.JTextArea chatText;
 
     public Client(String ip, int port) {
         try {
@@ -50,20 +52,35 @@ public class Client extends JFrame implements KeyListener, MouseListener {
                 System.out.println("Invalid packet: "+data.toString(4)+"\nContact server host for help");
                 System.exit(0);
             }
+            setSize(600,400);
             display = new Display(100);
             ReciveThread reciveThread = new ReciveThread();
             SendThread sendThread = new SendThread();
             reciveThread.start();
             sendThread.start();
+
+            chatText = new JTextArea();
+            chatText.setBounds(new Rectangle(10,10,30,30));
+            chatText.setEnabled(false);
+            chatText.append("Chat started");
+            //chatText
+
+
             add(display);
+            //add(chatText);
             setName("Game");
-            setSize(600,400);
             addKeyListener(this);
             addMouseListener(this);
+            setDefaultCloseOperation(EXIT_ON_CLOSE);
+
             setVisible(true);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void sendChat(String data){
+        chatText.append(data);
     }
 
     @Override
@@ -121,7 +138,7 @@ public class Client extends JFrame implements KeyListener, MouseListener {
                         if(data1.getInt("pairID") == 0) {
                             display.displayDataIn.add(new Pair<>(data1.getInt("key"), data1.getJSONObject("value")));
                         }else if(data1.getInt("pairID") == 1){
-                            display.displayDataIn.add(new TimedPair<>(data1.getInt("key"), data1.getJSONObject("value"), data1.getInt("time")));
+                            display.displayDataIn.add(new TimedPair<>(data1.getInt("key"), data1.getJSONObject("value"), Instant.parse(data1.getString("time"))));
                         }
 
 
@@ -160,18 +177,40 @@ public class Client extends JFrame implements KeyListener, MouseListener {
         }
     }
 
+    public class chatThread extends Thread{
+        @Override
+        public void run() {
+            while (true){
+                synchronized (dataIn){
+                    try {
+                        dataIn.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                for(int i = 0; i < dataIn.size(); i++){
+                    if(dataIn.get(i).getInt("operation") == Operation.CHAT){
+                        J
+                    }
+                }
+            }
+        }
+    }
+
     public class Display extends JPanel implements ActionListener {
         int Delay;
         Timer timer;
         Timer dataTimer;
         ArrayList<Pair<Integer, JSONObject>> displayDataIn = new ArrayList<>();
 
+
         public Display(int Delay){
             this.Delay = Delay;
             timer = new Timer(Delay, this);
             timer.start();
             dataTimer = new Timer(Delay, e -> {
-                for(Pair<Integer, JSONObject> data : displayDataIn){
+                for(int i = 0; i < displayDataIn.size(); i++){
+                    Pair<Integer, JSONObject> data = displayDataIn.get(i);
                     if(data instanceof TimedPair<Integer,JSONObject>){
                         TimedPair<Integer, JSONObject> timedPair = (TimedPair<Integer, JSONObject>) data;
                         if(timedPair.checkTime()){
@@ -186,8 +225,8 @@ public class Client extends JFrame implements KeyListener, MouseListener {
         public void doDraw(Graphics2D g2d) throws InterruptedException {
             g2d.setColor(Color.CYAN);
             g2d.drawRect(0,0,this.getWidth(),this.getHeight());
-            for(int i = 0; i < displayDataIn.size(); i++){
-                Pair<Integer, JSONObject> displayDataRaw = displayDataIn.get(i);
+
+            for(Pair<Integer, JSONObject> displayDataRaw : displayDataIn){
                 JSONObject displayData = displayDataRaw.getValue();
                 int x = displayData.getInt("x");
                 int y = displayData.getInt("y");

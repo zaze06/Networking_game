@@ -4,7 +4,7 @@ import java.sql.Timestamp;
 import java.time.*;
 
 public class TimedPair<K, V> extends Pair<K, V>{
-    Timestamp time;
+    Instant time;
 
     /**
      *
@@ -13,13 +13,17 @@ public class TimedPair<K, V> extends Pair<K, V>{
      * @param time how long in seconds to keep this object
      */
     public TimedPair(K key, V value, int time) {
+        this(key, value , Instant.now().plusSeconds(time));
+    }
+
+    public TimedPair(K key, V value, Instant time) {
         super(key, value);
-        this.time = new Timestamp(System.currentTimeMillis()+(time*1000));
+        this.time = time;
     }
 
     public boolean checkTime(){
-        Timestamp curentTime = new Timestamp(System.currentTimeMillis());
-        return time.equals(curentTime) || time.before(curentTime);
+        Instant curentTime = Instant.now();
+        return time.equals(curentTime) || time.isBefore(curentTime);
     }
 
     @Override
@@ -28,7 +32,7 @@ public class TimedPair<K, V> extends Pair<K, V>{
                 "\"pairID\": 1" +
                 ", \"key\": " + key.toString() +
                 ", \"value\": " + value.toString() +
-                ", \"time\": " + time.getTime() +
+                ", \"time\": \"" + time.toString() + "\"" +
                 '}';
     }
 }
