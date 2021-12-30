@@ -18,6 +18,7 @@ public class Client {
     ArrayList<String> dataOut;
     BufferedReader in;
     PrintWriter out;
+    Client client;
 
     // Game Variables
     int hp;
@@ -28,6 +29,7 @@ public class Client {
         this.name = name;
         this.ID = ID;
         dataIn = new ArrayList<>();
+        dataOut = new ArrayList<>();
         hp = 3;
         try {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -39,6 +41,7 @@ public class Client {
         reciveThread.start();
         SendThread sendThread = new SendThread();
         sendThread.start();
+        client = this;
     }
 
     public void send(String data){
@@ -46,6 +49,9 @@ public class Client {
             //System.out.println("sending data to client: "+socket.getInetAddress().getHostAddress());
             //System.out.println(data);
             dataOut.add(data);
+            synchronized (dataOut){
+                dataOut.notifyAll();
+            }
         }catch (Exception e){
             System.out.println("Exception in client send\n"+e.toString());
             Server.remove(this);
@@ -79,9 +85,11 @@ public class Client {
                         dataOut.wait();
                     }
                     out.println(dataOut.get(0));
+                    System.out.println("Sending data: "+dataOut.get(0)+". To "+socket.getInetAddress().getHostAddress()+" whit name: "+name+". Client id"+ID);
                     dataOut.remove(0);
                 }catch (Exception e){
-
+                    System.out.println("ReceiveThread.run exception\n" + e.toString());
+                    Server.remove(client);
                 }
             }
         }

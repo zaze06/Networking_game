@@ -153,6 +153,7 @@ public class Client extends JFrame implements KeyListener, MouseListener {
             while(true){
                 try{
                     String dataRaw = in.readLine();
+                    System.out.println("Received: "+dataRaw);
                     DataRawHandler dataRawHandler = new DataRawHandler(dataRaw);
                     dataRawHandler.start();
                     //in.close();
