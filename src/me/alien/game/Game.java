@@ -1,9 +1,7 @@
 package me.alien.game;
 
-import java.time.LocalDateTime;
-
 public class Game {
-    public static final String VERSION = "0.0.1-DEV";
+    public static final String VERSION = "0.0.2-DEV";
 
 
     public static void main(String[] args) {
@@ -11,7 +9,7 @@ public class Game {
             if(args[0].equalsIgnoreCase("server")){
                 new Server();
             }else{
-                new Client("127.0.0.1"/*args[0]*/, 3030);
+                new Client(args[0], 3030);
             }
         }
     }

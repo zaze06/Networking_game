@@ -2,6 +2,8 @@ package me.alien.game;
 
 import me.alien.game.util.*;
 import me.alien.game.util.Client;
+import me.alien.game.util.data.DisplayData;
+import me.alien.game.util.data.display.DataRectangel;
 import me.alien.game.util.data.display.DataString;
 import org.json.JSONObject;
 
@@ -76,11 +78,14 @@ public class Server {
                         Client client = new Client(socket, name, id);
                         clients.add(client);
                         System.out.println("New client added ip: "+client.getSocket().getInetAddress().toString()+" name: "+client.getName());
+
                         dataOut.add(new Pair<>(id, new Data(Operation.CHAT, "\"" + name + " have joined the game\"")));
                         synchronized (dataOut){
                             dataOut.notifyAll();
                         }
+                        client.send(new Data(Operation.CHAT, "\"" + "Welcome " + name + ". The game will start soon\"").toString());
                         client.send(new Data(Operation.DISPLAY_DATA, new TimedPair<Integer, JSONObject>(-1, new JSONObject(new DataString(10,10,"Connected!", Color.BLACK).toString()), 10).toString()).toString());
+                        client.send(new Data(Operation.DISPLAY_DATA, new Pair<Integer, DisplayData>(0, new DataRectangel(0,0,client.getHp()*10,10, Color.red, true)).toString()).toString());
                     }
                 }catch (Exception e){
 
@@ -97,9 +102,12 @@ public class Server {
                     synchronized (dataOut){
                         dataOut.wait();
                     }
-                    System.out.println("Sending out data to clients\n"+dataOut.get(0));
+                    Pair<Integer, Data> sendData = dataOut.get(0);
+                    System.out.println("Sending out data to clients\n"+ sendData);
                     for(Client client : clients){
-                        client.send(dataOut.get(0).getValue().toString());
+                        if(sendData.getKey() != client.getID()) {
+                            client.send(sendData.getValue().toString());
+                        }
                     }
                     dataOut.remove(0);
                 }catch (Exception e){

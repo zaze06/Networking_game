@@ -24,15 +24,22 @@ public class Client extends JFrame implements KeyListener, MouseListener {
     ArrayList<JSONObject> dataIn;
     Display display;
     javax.swing.JTextArea chatText;
+    int width;
+    int height;
+    BufferedReader in;
+    PrintWriter out;
 
     public Client(String ip, int port) {
         try {
+            chatText = new JTextArea();
             System.out.println("Communicate with server "+ip+" at "+port);
             socket = new Socket(ip, port);
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String line = in.readLine();
             JSONObject data = new JSONObject(line);;
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            out = new PrintWriter(socket.getOutputStream(), true);
+            dataIn = new ArrayList<>();
+            dataOut = new ArrayList<>();
             System.out.println("Server have accepted the socket, got \""+line+"\"");
             if(data.getInt("operation") == Operation.JOIN) {
                 out.println(new Data(Operation.DATA,"{version: \""+VERSION+"\"}"));
@@ -54,26 +61,41 @@ public class Client extends JFrame implements KeyListener, MouseListener {
             }
             setSize(600,400);
             display = new Display(100);
+            display.setBounds(0,0,600,400);
             ReciveThread reciveThread = new ReciveThread();
             SendThread sendThread = new SendThread();
             reciveThread.start();
             sendThread.start();
+            ChatThread chatThread = new ChatThread();
+            chatThread.start();
+            setLayout(new BorderLayout());
 
-            chatText = new JTextArea();
-            chatText.setBounds(new Rectangle(10,10,30,30));
-            chatText.setEnabled(false);
-            chatText.append("Chat started");
+            chatText.setBounds(570,0,30,30);
+            //chatText.setEnabled(false);
+            //chatText.setM
+            chatText.append("Chat started\n");
+            //this.setComponentZOrder(chatText, 0);
             //chatText
 
 
-            add(display);
-            //add(chatText);
+
+
+            add(display, BorderLayout.CENTER);
+            add(chatText, BorderLayout.EAST);
             setName("Game");
             addKeyListener(this);
             addMouseListener(this);
             setDefaultCloseOperation(EXIT_ON_CLOSE);
 
             setVisible(true);
+
+
+            //this.setComponentZOrder(chatText, 20);
+            width = getWidth();
+            height = getHeight();
+
+            out.println(new Data(Operation.SUCCESS, "\"Setup complete. Waiting for data\""));
+            chatText.repaint();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -81,6 +103,7 @@ public class Client extends JFrame implements KeyListener, MouseListener {
 
     public void sendChat(String data){
         chatText.append(data);
+        chatText.repaint();
     }
 
     @Override
@@ -124,34 +147,74 @@ public class Client extends JFrame implements KeyListener, MouseListener {
     }
 
     public class ReciveThread extends Thread{
+        static int counter = 0;
         @Override
         public void run() {
             while(true){
                 try{
-                    BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     String dataRaw = in.readLine();
-                    System.out.println(dataRaw);
-                    JSONObject data = new JSONObject(dataRaw);
-                    if(data.getInt("operation") == Operation.DISPLAY_DATA){
+                    DataRawHandler dataRawHandler = new DataRawHandler(dataRaw);
+                    dataRawHandler.start();
+                    //in.close();
+                }catch (Exception e) {
+                    if (counter < 10) {
+                        System.out.println("ReceiveThread.run exception\n" + e.toString());
+                        counter++;
+                    }
+                }
+            }
+        }
+    }
 
-                        JSONObject data1 = data.getJSONObject("data");
-                        if(data1.getInt("pairID") == 0) {
-                            display.displayDataIn.add(new Pair<>(data1.getInt("key"), data1.getJSONObject("value")));
-                        }else if(data1.getInt("pairID") == 1){
-                            display.displayDataIn.add(new TimedPair<>(data1.getInt("key"), data1.getJSONObject("value"), Instant.parse(data1.getString("time"))));
-                        }
+    private class DataRawHandler extends Thread{
+        String dataRaw;
+        public DataRawHandler(String dataRaw){
+            this.dataRaw = dataRaw;
+            //System.out.println("DRH"+dataRaw);
+        }
+        @Override
+        public void run() {
+            //System.out.println(dataRaw);
+            JSONObject data = new JSONObject(dataRaw);
+            if(data.getInt("operation") == Operation.DISPLAY_DATA){
 
-
-                    }else{
-                        dataIn.add(data);
-
-                        synchronized (dataIn){
-                            dataIn.notifyAll();
+                JSONObject data1 = data.getJSONObject("data");
+                if(data1.getInt("pairID") == 0) {
+                    boolean found = false;
+                    for(int i = 0; i < display.displayDataIn.size(); i++){
+                        Pair<Integer, JSONObject> displayData = display.displayDataIn.get(i);
+                        if(displayData.getKey() == data1.getInt("key")){
+                            display.displayDataIn.set(i, new Pair<>(data1.getInt("key"), data1.getJSONObject("value")));
+                            found = true;
+                            break;
                         }
                     }
-                    in.close();
-                }catch (Exception e){
+                    if(!found){
+                        display.displayDataIn.add(new Pair<>(data1.getInt("key"), data1.getJSONObject("value")));
+                    }
 
+                }else if(data1.getInt("pairID") == 1){
+                    boolean found = false;
+                    for(int i = 0; i < display.displayDataIn.size(); i++){
+                        Pair<Integer, JSONObject> displayData = display.displayDataIn.get(i);
+                        if(displayData.getKey() == data1.getInt("key")){
+                            display.displayDataIn.set(i, new TimedPair<>(data1.getInt("key"), data1.getJSONObject("value"), Instant.parse(data1.getString("time"))));
+                            found = true;
+                            break;
+                        }
+                    }
+                    if(!found){
+                        display.displayDataIn.add(new TimedPair<>(data1.getInt("key"), data1.getJSONObject("value"), Instant.parse(data1.getString("time"))));
+                    }
+                }
+
+
+            }else{
+                //System.out.println(data.toString());
+                dataIn.add(data);
+
+                synchronized (dataIn){
+                    dataIn.notifyAll();
                 }
             }
         }
@@ -165,8 +228,7 @@ public class Client extends JFrame implements KeyListener, MouseListener {
                     synchronized (dataOut){
                         dataOut.wait();
                     }
-                    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-                    out.write(dataOut.get(0).toString());
+                    out.println(dataOut.get(0));
                     out.close();
                     dataOut.remove(0);
 
@@ -177,20 +239,23 @@ public class Client extends JFrame implements KeyListener, MouseListener {
         }
     }
 
-    public class chatThread extends Thread{
+    public class ChatThread extends Thread{
         @Override
         public void run() {
             while (true){
                 synchronized (dataIn){
                     try {
                         dataIn.wait();
+                        //System.out.println("Wait done");
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
                 for(int i = 0; i < dataIn.size(); i++){
                     if(dataIn.get(i).getInt("operation") == Operation.CHAT){
-                        J
+                        chatText.append(dataIn.get(i).getString("data")+"\n");
+                        //System.out.println(dataIn.get(i).getString("data"));
+                        chatText.repaint();
                     }
                 }
             }
@@ -223,8 +288,8 @@ public class Client extends JFrame implements KeyListener, MouseListener {
         }
 
         public void doDraw(Graphics2D g2d) throws InterruptedException {
-            g2d.setColor(Color.CYAN);
-            g2d.drawRect(0,0,this.getWidth(),this.getHeight());
+            //g2d.setColor(Color.CYAN);
+            //g2d.drawRect(0,0, width, height);
 
             for(Pair<Integer, JSONObject> displayDataRaw : displayDataIn){
                 JSONObject displayData = displayDataRaw.getValue();
@@ -236,6 +301,16 @@ public class Client extends JFrame implements KeyListener, MouseListener {
                 if(type == DisplayData.STRING){
                     g2d.setColor(color);
                     g2d.drawString((String)data,x,y);
+                }else if(type == DisplayData.RECTANGLE){
+                    JSONObject rectangle = (JSONObject) data;
+                    boolean fill = rectangle.getBoolean("fill");
+                    g2d.setColor(color);
+                    Rectangle rect = new Rectangle(rectangle.getInt("x"), rectangle.getInt("y"), rectangle.getInt("width"), rectangle.getInt("height"));
+                    if(!fill) {
+                        g2d.draw(rect);
+                    }else{
+                        g2d.fill(rect);
+                    }
                 }
             }
         }
@@ -255,5 +330,4 @@ public class Client extends JFrame implements KeyListener, MouseListener {
             }
         }
     }
-
 }

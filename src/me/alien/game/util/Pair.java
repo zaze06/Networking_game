@@ -34,7 +34,7 @@ public class Pair<K, V> {
     public String toString() {
         return "{" +
                 "\"pairID\": 0" +
-                "\"key\": " + key.toString() +
+                ", \"key\": " + key.toString() +
                 ", \"value\": " + value.toString() +
                 '}';
     }

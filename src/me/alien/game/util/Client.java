@@ -1,8 +1,10 @@
 package me.alien.game.util;
 
-import me.alien.game.Game;
 import me.alien.game.Server;
+import me.alien.game.util.data.DisplayData;
+import me.alien.game.util.data.display.DataRectangel;
 
+import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -12,25 +14,46 @@ public class Client {
     Socket socket;
     String name;
     final int ID;
-    ArrayList<String> data;
+    ArrayList<String> dataIn;
+    ArrayList<String> dataOut;
+    BufferedReader in;
+    PrintWriter out;
+
+    // Game Variables
+    int hp;
+
 
     public Client(Socket socket, String name, int ID) {
         this.socket = socket;
         this.name = name;
         this.ID = ID;
-        data = new ArrayList<>();
+        dataIn = new ArrayList<>();
+        hp = 3;
+        try {
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out = new PrintWriter(socket.getOutputStream(), true);
+        }catch (Exception e){
+
+        }
         ReciveThread reciveThread = new ReciveThread();
         reciveThread.start();
-
+        SendThread sendThread = new SendThread();
+        sendThread.start();
     }
 
     public void send(String data){
         try {
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            out.println(data);
+            //System.out.println("sending data to client: "+socket.getInetAddress().getHostAddress());
+            //System.out.println(data);
+            dataOut.add(data);
         }catch (Exception e){
+            System.out.println("Exception in client send\n"+e.toString());
             Server.remove(this);
         }
+    }
+
+    public int getHp() {
+        return hp;
     }
 
     public class ReciveThread extends Thread{
@@ -39,7 +62,7 @@ public class Client {
             while(true){
                 try{
                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                    data.add(in.readLine());
+                    dataIn.add(in.readLine());
                 }catch (Exception e){
 
                 }
@@ -47,17 +70,21 @@ public class Client {
         }
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Client client = (Client) o;
-        return ID == client.ID && Objects.equals(socket, client.socket) && Objects.equals(name, client.name) && Objects.equals(data, client.data);
-    }
+    public class SendThread extends Thread{
+        @Override
+        public void run() {
+            while (true){
+                try {
+                    synchronized (dataOut){
+                        dataOut.wait();
+                    }
+                    out.println(dataOut.get(0));
+                    dataOut.remove(0);
+                }catch (Exception e){
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(socket, name, ID, data);
+                }
+            }
+        }
     }
 
     public String getName() {
