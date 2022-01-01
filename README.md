@@ -1,4 +1,7 @@
 # Networking game
+![java](https://img.shields.io/badge/made%20in%20-Java-%23ff723b?logo=Java&logoColor=abcdef) [![CircleCI](https://circleci.com/gh/zaze06/Networking_game/tree/master.svg?style=shield)](https://circleci.com/gh/zaze06/Networking_game/tree/master)
+[![text](https://img.shields.io/badge/using-org.json-%23ff723b?logo=json&logoColor=black)](https://www.json.org/json-en.html)
+
 ## Way?
 Well I wanted to make a game me  and my siblings can play (Doesn't mean you can't). So that's way I made this game.
 ## How to play?
@@ -19,4 +22,12 @@ Well I wanted to make a game me  and my siblings can play (Doesn't mean you can'
 5. type `$ java -jar game.jar <ip to server>` to connect to the server you may need to open a new command prompt from step 2
 6. Have fun!
 ## How to compile your own
-1. make sure the repository is buildable 
+1. make sure the repository is buildable [![CircleCI](https://circleci.com/gh/zaze06/Networking_game/tree/master.svg?style=shield)](https://circleci.com/gh/zaze06/Networking_game/tree/master)
+2. download the repo ether via the download button on github or
+    1. using git `$git clone https://github.com/zaze06/Networking_game.git`
+    2. or by using your favorite IDE
+3. ether build it using gradle or compile it in other means
+    1. if your using gradle go into the directory of the repositry
+        1. open a command promt in sad directory by following the secund step in [How to play](https://github.com/zaze06/Networking_game#how-to-play)
+        2. run `./gradlew build` or `gradlew build`. Note you might need to run `chmod +x ./gradlew` to make it executable
+4. now you will have a jar called `game-<version>.jar` in `build/libs/` folder.
