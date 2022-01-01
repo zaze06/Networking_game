@@ -23,11 +23,11 @@ Well I wanted to make a game me  and my siblings can play (Doesn't mean you can'
 6. Have fun!
 ## How to compile your own
 1. make sure the repository is buildable [![CircleCI](https://circleci.com/gh/zaze06/Networking_game/tree/master.svg?style=shield)](https://circleci.com/gh/zaze06/Networking_game/tree/master)
-2. download the repo ether via the download button on github or
+2. download the repo ether via the download button on GitHub or
     1. using git `$git clone https://github.com/zaze06/Networking_game.git`
     2. or by using your favorite IDE
-3. ether build it using gradle or compile it in other means
-    1. if your using gradle go into the directory of the repositry
-        1. open a command promt in sad directory by following the secund step in [How to play](https://github.com/zaze06/Networking_game#how-to-play)
+3. either build it using gradle or compile it in other means
+    1. if you're using gradle go into the directory of the repository
+        1. open a command prompt in sad directory by following the second step in [How to play](https://github.com/zaze06/Networking_game#how-to-play)
         2. run `./gradlew build` or `gradlew build`. Note you might need to run `chmod +x ./gradlew` to make it executable
 4. now you will have a jar called `game-<version>.jar` in `build/libs/` folder.
