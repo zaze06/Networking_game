@@ -1,6 +1,5 @@
 package me.alien.game.util;
 
-import java.sql.Timestamp;
 import java.time.*;
 
 public class TimedPair<K, V> extends Pair<K, V>{
@@ -8,8 +7,8 @@ public class TimedPair<K, V> extends Pair<K, V>{
 
     /**
      *
-     * @param key
-     * @param value
+     * @param key what Object the key shall be
+     * @param value what object the value shall be
      * @param time how long in seconds to keep this object
      */
     public TimedPair(K key, V value, int time) {
@@ -22,8 +21,8 @@ public class TimedPair<K, V> extends Pair<K, V>{
     }
 
     public boolean checkTime(){
-        Instant curentTime = Instant.now();
-        return time.equals(curentTime) || time.isBefore(curentTime);
+        Instant currentTime = Instant.now();
+        return time.equals(currentTime) || time.isBefore(currentTime);
     }
 
     @Override

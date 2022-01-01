@@ -1,21 +1,20 @@
 package me.alien.game.util;
 
 import me.alien.game.Server;
-import me.alien.game.util.data.DisplayData;
-import me.alien.game.util.data.display.DataRectangel;
 
-import java.awt.*;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Objects;
 
 public class Client {
     Socket socket;
     String name;
     final int ID;
     ArrayList<String> dataIn;
-    ArrayList<String> dataOut;
+    final ArrayList<String> dataOut;
     BufferedReader in;
     PrintWriter out;
     Client client;
@@ -35,10 +34,10 @@ public class Client {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
         }catch (Exception e){
-
+            e.printStackTrace();
         }
-        ReciveThread reciveThread = new ReciveThread();
-        reciveThread.start();
+        ReceiveThread receiveThread = new ReceiveThread();
+        receiveThread.start();
         SendThread sendThread = new SendThread();
         sendThread.start();
         client = this;
@@ -46,14 +45,18 @@ public class Client {
 
     public void send(String data){
         try {
-            //System.out.println("sending data to client: "+socket.getInetAddress().getHostAddress());
-            //System.out.println(data);
             dataOut.add(data);
             synchronized (dataOut){
                 dataOut.notifyAll();
             }
         }catch (Exception e){
-            System.out.println("Exception in client send\n"+e.toString());
+            System.out.println("Exception in client send\n"+e);
+            out.println(new Data(Operation.ERROR, "\"An Exception occurred on the server for you. closing socket"));
+            try {
+                socket.close();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
             Server.remove(this);
         }
     }
@@ -62,15 +65,20 @@ public class Client {
         return hp;
     }
 
-    public class ReciveThread extends Thread{
+    public class ReceiveThread extends Thread{
         @Override
         public void run() {
+            boolean exception = false;
             while(true){
                 try{
                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     dataIn.add(in.readLine());
+                    exception = false;
                 }catch (Exception e){
-
+                    if((!exception)){
+                        e.printStackTrace();
+                        exception = true;
+                    }
                 }
             }
         }
@@ -81,14 +89,16 @@ public class Client {
         public void run() {
             while (true){
                 try {
-                    synchronized (dataOut){
-                        dataOut.wait();
+                    if(dataOut.size() == 0){
+                        synchronized (dataOut){
+                            dataOut.wait();
+                        }
                     }
                     out.println(dataOut.get(0));
                     System.out.println("Sending data: "+dataOut.get(0)+". To "+socket.getInetAddress().getHostAddress()+" whit name: "+name+". Client id"+ID);
                     dataOut.remove(0);
                 }catch (Exception e){
-                    System.out.println("ReceiveThread.run exception\n" + e.toString());
+                    System.out.println("ReceiveThread.run exception\n" + e);
                     Server.remove(client);
                 }
             }

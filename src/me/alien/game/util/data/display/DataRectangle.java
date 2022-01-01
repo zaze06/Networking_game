@@ -4,13 +4,13 @@ import me.alien.game.util.data.DisplayData;
 
 import java.awt.*;
 
-public class DataRectangel extends DisplayData {
+public class DataRectangle extends DisplayData {
 
     boolean fill;
     Rectangle rectangle;
     Color color;
 
-    public DataRectangel(int x, int y, int width, int height, Color color, boolean fill) {
+    public DataRectangle(int x, int y, int width, int height, Color color, boolean fill) {
         super(x, y);
         rectangle = new Rectangle(x,y,width,height);
         this.color = color;
