@@ -1,5 +1,1 @@
-# Project exclude paths
-/out/
-.idea/vcs.xml
-test.json
-.idea/jsonSchemas.xml
+/.gradle/
