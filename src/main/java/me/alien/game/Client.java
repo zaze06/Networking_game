@@ -151,7 +151,7 @@ public class Client extends JFrame implements KeyListener, MouseListener {
     }
 
     public class ReceiveThread extends Thread{
-        static int counter = 0;
+        int counter = 0;
         @Override
         public void run() {
             while(true){
@@ -297,7 +297,8 @@ public class Client extends JFrame implements KeyListener, MouseListener {
             dataTimer = new Timer(Delay, e -> {
                 for(int i = 0; i < displayDataIn.size(); i++){
                     Pair<Integer, JSONObject> data = displayDataIn.get(i);
-                    if(data instanceof TimedPair<Integer, JSONObject> timedPair){
+                    if(data instanceof TimedPair){
+                        TimedPair<Integer, JSONObject> timedPair = (TimedPair<Integer, JSONObject>) data;
                         if(timedPair.checkTime()){
                             displayDataIn.remove(data);
                         }

@@ -30,21 +30,21 @@ public class Version {
             } else if (testIfAscii(c)) {
                 tmpStr.append(c);
             } else if ((c == '-') || (c == '.')) {
-                if (!tmpInt.isEmpty()) {
+                if (!tmpInt.toString().equalsIgnoreCase("")) {
                     versionInt.add(new Pair<>(pos, Integer.parseInt(tmpInt.toString())));
                     tmpInt = new StringBuilder();
                 }
-                if (!tmpStr.isEmpty()) {
+                if (!tmpStr.toString().equalsIgnoreCase("")) {
                     versionString.add(new Pair<>(pos, tmpStr.toString()));
                     tmpStr = new StringBuilder();
                 }
                 pos++;
             }
         }
-        if (!tmpInt.isEmpty()) {
+        if (!tmpInt.toString().equalsIgnoreCase("")) {
             versionInt.add(new Pair<>(pos, Integer.parseInt(tmpInt.toString())));
         }
-        if (!tmpStr.isEmpty()) {
+        if (!tmpStr.toString().equalsIgnoreCase("")) {
             versionString.add(new Pair<>(pos, tmpStr.toString()));
         }
         this.length = pos+1;

@@ -3,15 +3,26 @@ plugins {
 }
 
 group 'me.alien.game'
-version '0.0.3-DEV'
+version '1.0'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
+    implementation 'org.json:json:20211205'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+}
+
+jar {
+    manifest {
+        attributes "Main-Class": "me.alien.game.Game"
+    }
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
 }
 
 test {
