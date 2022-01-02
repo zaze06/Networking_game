@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'me.alien.game'
-version '1.0'
+version '0.0.3-DEV'
 
 repositories {
     mavenCentral()
