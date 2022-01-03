@@ -1,6 +1,6 @@
 # Networking game
 ![java](https://img.shields.io/badge/made%20in%20-Java-%23ff723b?logo=Java&logoColor=abcdef) [![CircleCI](https://circleci.com/gh/zaze06/Networking_game/tree/master.svg?style=shield)](https://circleci.com/gh/zaze06/Networking_game/tree/master)
-[![text](https://img.shields.io/badge/using-org.json-%23ff723b?logo=json&logoColor=black)](https://www.json.org/json-en.html) ![version](https://img.shields.io/badge/Version-0.0.3--DEV-%23ff723b)
+[![text](https://img.shields.io/badge/using-org.json-%23ff723b?logo=json&logoColor=black)](https://www.json.org/json-en.html) ![version](https://img.shields.io/badge/Version-0.1-%23ff723b)
 
 ## Way?
 Well I wanted to make a game me  and my siblings can play (Doesn't mean you can't). So that's way I made this game.
