@@ -4,6 +4,9 @@
 
 ## Way?
 Well I wanted to make a game me  and my siblings can play (Doesn't mean you can't). So that's way I made this game.
+## Special thanks to
+[catch23](https://stackoverflow.com/users/1498427/catch23) who made the maze algorithm
+
 ## How to play?
 1. download the latest jar or build yor own from this repository
 2. open a command prompt 

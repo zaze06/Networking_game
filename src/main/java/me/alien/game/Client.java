@@ -1,10 +1,9 @@
 package me.alien.game;
 
-import me.alien.game.util.Data;
-import me.alien.game.util.Operation;
-import me.alien.game.util.Pair;
-import me.alien.game.util.TimedPair;
+import me.alien.game.map.Tile;
+import me.alien.game.util.*;
 import me.alien.game.util.data.DisplayData;
+import me.alien.game.util.data.Movement;
 import org.json.JSONObject;
 
 import javax.swing.*;
@@ -15,12 +14,13 @@ import java.io.*;
 import java.net.Socket;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import static me.alien.game.Game.VERSION;
 
-public class Client extends JFrame implements KeyListener, MouseListener {
+public class Client extends JFrame {
     Socket socket;
-    ArrayList<Pair<Integer, Data>> dataOut;
+    ArrayList<String> dataOut;
     ArrayList<JSONObject> dataIn;
     Display display;
     javax.swing.JTextArea chatText;
@@ -29,6 +29,7 @@ public class Client extends JFrame implements KeyListener, MouseListener {
     BufferedReader in;
     PrintWriter out;
     private ArrayList<String> dataInRaw;
+    private final ArrayList<Integer> keysDown = new ArrayList<>();
 
     public Client(String ip, int port) {
         try {
@@ -64,17 +65,20 @@ public class Client extends JFrame implements KeyListener, MouseListener {
                 System.exit(0);
             }
             setSize(600,400);
-            display = new Display(100);
+            display = new Display(100, this);
             display.setBounds(0,0,600,400);
             ReceiveThread receiveThread = new ReceiveThread();
             SendThread sendThread = new SendThread();
+            KeyHandlerThread keyHandlerThread = new KeyHandlerThread();
+            ChatThread chatThread = new ChatThread();
+            keyHandlerThread.start();
             receiveThread.start();
             sendThread.start();
-            ChatThread chatThread = new ChatThread();
             chatThread.start();
             setLayout(new BorderLayout());
 
             chatText.setBounds(570,0,30,30);
+            chatText.setEditable(false);
             //chatText.setEnabled(false);
             //chatText.setM
             chatText.append("Chat started\n");
@@ -87,9 +91,13 @@ public class Client extends JFrame implements KeyListener, MouseListener {
             add(display, BorderLayout.CENTER);
             add(chatText, BorderLayout.EAST);
             setName("Game");
-            addKeyListener(this);
-            addMouseListener(this);
             setDefaultCloseOperation(EXIT_ON_CLOSE);
+
+            /*addWindowListener(new WindowAdapter() {
+                public void windowClosing(WindowEvent e) {
+                    out.println(new Data(Operation.EXIT, new JSONString("Exiting").toString()));
+                }
+            });*/
 
             setVisible(true);
 
@@ -100,8 +108,16 @@ public class Client extends JFrame implements KeyListener, MouseListener {
 
             out.println(new Data(Operation.SUCCESS, "\"Setup complete. Waiting for data\""));
             chatText.repaint();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public class KeyHandlerThread extends Thread
+    {
+        @Override
+        public void run() {
+
         }
     }
 
@@ -110,42 +126,37 @@ public class Client extends JFrame implements KeyListener, MouseListener {
         chatText.repaint();
     }
 
-    @Override
     public void keyTyped(KeyEvent e) {
 
     }
 
-    @Override
     public void keyPressed(KeyEvent e) {
-
+        dataOut.add(new Data(Operation.MOVEMENT_DATA, Movement.fromKey(e.getKeyCode(), 1).toString()).toString());
+        synchronized (dataOut) {
+            dataOut.notifyAll();
+        }
     }
 
-    @Override
     public void keyReleased(KeyEvent e) {
 
     }
 
-    @Override
     public void mouseClicked(MouseEvent e) {
 
     }
 
-    @Override
     public void mousePressed(MouseEvent e) {
 
     }
 
-    @Override
     public void mouseReleased(MouseEvent e) {
 
     }
 
-    @Override
     public void mouseEntered(MouseEvent e) {
 
     }
 
-    @Override
     public void mouseExited(MouseEvent e) {
 
     }
@@ -176,58 +187,58 @@ public class Client extends JFrame implements KeyListener, MouseListener {
         @Override
         public void run() {
             while (true) {
-                if(dataInRaw.size() == 0) {
-                    synchronized (dataInRaw) {
-                        try {
+                try {
+                    if (dataInRaw.size() == 0) {
+                        synchronized (dataInRaw) {
                             dataInRaw.wait();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
                         }
                     }
-                }
-                String dataRaw = dataInRaw.get(0);
-                dataInRaw.remove(0);
-                JSONObject data = new JSONObject(dataRaw);
-                if (data.getInt("operation") == Operation.DISPLAY_DATA) {
+                    String dataRaw = dataInRaw.get(0);
+                    dataInRaw.remove(0);
+                    JSONObject data = new JSONObject(dataRaw);
+                    if (data.getInt("operation") == Operation.DISPLAY_DATA) {
 
-                    JSONObject data1 = data.getJSONObject("data");
-                    if (data1.getInt("pairID") == 0) {
-                        boolean found = false;
-                        for (int i = 0; i < display.displayDataIn.size(); i++) {
-                            Pair<Integer, JSONObject> displayData = display.displayDataIn.get(i);
-                            if (displayData.getKey() == data1.getInt("key")) {
-                                display.displayDataIn.set(i, new Pair<>(data1.getInt("key"), data1.getJSONObject("value")));
-                                found = true;
-                                break;
+                        JSONObject data1 = data.getJSONObject("data");
+                        if (data1.getInt("pairID") == 0) {
+                            boolean found = false;
+                            for (int i = 0; i < display.displayDataIn.size(); i++) {
+                                Pair<Integer, JSONObject> displayData = display.displayDataIn.get(i);
+                                if (displayData.getKey() == data1.getInt("key")) {
+                                    display.displayDataIn.set(i, new Pair<>(data1.getInt("key"), data1.getJSONObject("value")));
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found) {
+                                display.displayDataIn.add(new Pair<>(data1.getInt("key"), data1.getJSONObject("value")));
+                            }
+
+                        } else if (data1.getInt("pairID") == 1) {
+                            boolean found = false;
+                            for (int i = 0; i < display.displayDataIn.size(); i++) {
+                                Pair<Integer, JSONObject> displayData = display.displayDataIn.get(i);
+                                if (displayData.getKey() == data1.getInt("key")) {
+                                    display.displayDataIn.set(i, new TimedPair<>(data1.getInt("key"), data1.getJSONObject("value"), Instant.parse(data1.getString("time"))));
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found) {
+                                display.displayDataIn.add(new TimedPair<>(data1.getInt("key"), data1.getJSONObject("value"), Instant.parse(data1.getString("time"))));
                             }
                         }
-                        if (!found) {
-                            display.displayDataIn.add(new Pair<>(data1.getInt("key"), data1.getJSONObject("value")));
-                        }
 
-                    } else if (data1.getInt("pairID") == 1) {
-                        boolean found = false;
-                        for (int i = 0; i < display.displayDataIn.size(); i++) {
-                            Pair<Integer, JSONObject> displayData = display.displayDataIn.get(i);
-                            if (displayData.getKey() == data1.getInt("key")) {
-                                display.displayDataIn.set(i, new TimedPair<>(data1.getInt("key"), data1.getJSONObject("value"), Instant.parse(data1.getString("time"))));
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found) {
-                            display.displayDataIn.add(new TimedPair<>(data1.getInt("key"), data1.getJSONObject("value"), Instant.parse(data1.getString("time"))));
+
+                    } else {
+                        //System.out.println(data.toString());
+                        dataIn.add(data);
+
+                        synchronized (dataIn) {
+                            dataIn.notifyAll();
                         }
                     }
-
-
-                } else {
-                    //System.out.println(data.toString());
-                    dataIn.add(data);
-
-                    synchronized (dataIn) {
-                        dataIn.notifyAll();
-                    }
+                }catch (Exception e){
+                    e.printStackTrace();
                 }
             }
         }
@@ -239,11 +250,12 @@ public class Client extends JFrame implements KeyListener, MouseListener {
             boolean exception = false;
             while(true){
                 try{
-                    synchronized (dataOut){
-                        dataOut.wait();
+                    if(dataOut.size() == 0) {
+                        synchronized (dataOut) {
+                            dataOut.wait();
+                        }
                     }
                     out.println(dataOut.get(0));
-                    out.close();
                     dataOut.remove(0);
                     exception = false;
                 }catch (Exception e){
@@ -260,38 +272,43 @@ public class Client extends JFrame implements KeyListener, MouseListener {
         @Override
         public void run() {
             while (true){
-                if(dataIn.size() == 0) {
-                    synchronized (dataIn) {
-                        try {
+                try {
+                    if (dataIn.size() == 0) {
+                        synchronized (dataIn) {
                             dataIn.wait();
-                            //System.out.println("Wait done");
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
                         }
                     }
-                }
-                for(int i = 0; i < dataIn.size(); i++){
-                    if(dataIn.get(i).getInt("operation") == Operation.CHAT){
-                        chatText.append(dataIn.get(i).getString("data")+"\n");
-                        dataIn.remove(i);
-                        i--;
-                        //System.out.println(dataIn.get(i).getString("data"));
-                        chatText.repaint();
+                    for (int i = 0; i < dataIn.size(); i++) {
+                        if (dataIn.get(i).getInt("operation") == Operation.CHAT) {
+                            chatText.append(dataIn.get(i).getString("data") + "\n");
+                            dataIn.remove(i);
+                            i--;
+                            //System.out.println(dataIn.get(i).getString("data"));
+                            chatText.repaint();
+                        }
                     }
+                }catch (Exception e){
+                    e.printStackTrace();
                 }
             }
         }
     }
 
-    public static class Display extends JPanel implements ActionListener {
+    public static class Display extends JPanel implements KeyListener, MouseListener, ActionListener {
         int Delay;
         Timer timer;
         Timer dataTimer;
         ArrayList<Pair<Integer, JSONObject>> displayDataIn = new ArrayList<>();
+        Client client;
 
 
-        public Display(int Delay){
+        public Display(int Delay, Client client){
+            this.client = client;
             this.Delay = Delay;
+            this.setFocusable(true);
+            this.requestFocusInWindow();
+            addKeyListener(this);
+            addMouseListener(this);
             timer = new Timer(Delay, this);
             timer.start();
             dataTimer = new Timer(Delay, e -> {
@@ -311,25 +328,33 @@ public class Client extends JFrame implements KeyListener, MouseListener {
         public void doDraw(Graphics2D g2d){
 
             for(Pair<Integer, JSONObject> displayDataRaw : displayDataIn){
-                JSONObject displayData = displayDataRaw.getValue();
-                int x = displayData.getInt("x");
-                int y = displayData.getInt("y");
-                Color color = new ColorUIResource(displayData.getInt("color"));
-                Object data = displayData.get("data");
-                int type = displayData.getInt("type");
-                if(type == DisplayData.STRING){
-                    g2d.setColor(color);
-                    g2d.drawString((String)data,x,y);
-                }else if(type == DisplayData.RECTANGLE){
-                    JSONObject rectangle = (JSONObject) data;
-                    boolean fill = rectangle.getBoolean("fill");
-                    g2d.setColor(color);
-                    Rectangle rect = new Rectangle(rectangle.getInt("x"), rectangle.getInt("y"), rectangle.getInt("width"), rectangle.getInt("height"));
-                    if(!fill) {
-                        g2d.draw(rect);
-                    }else{
-                        g2d.fill(rect);
+                try {
+                    JSONObject displayData = displayDataRaw.getValue();
+                    int x = displayData.getInt("x");
+                    int y = displayData.getInt("y");
+                    Color color = new ColorUIResource(displayData.getInt("color"));
+                    Object data = displayData.get("data");
+                    int type = displayData.getInt("type");
+                    if (type == DisplayData.STRING) {
+                        g2d.setColor(color);
+                        g2d.drawString((String) data, x, y);
+                    } else if (type == DisplayData.RECTANGLE) {
+                        JSONObject rectangle = (JSONObject) data;
+                        boolean fill = rectangle.getBoolean("fill");
+                        g2d.setColor(color);
+                        Rectangle rect = new Rectangle(rectangle.getInt("x"), rectangle.getInt("y"), rectangle.getInt("width"), rectangle.getInt("height"));
+                        if (!fill) {
+                            g2d.draw(rect);
+                        } else {
+                            g2d.fill(rect);
+                        }
+                    } else if (type == DisplayData.MAP) {
+                        for (Tile tile : Map.fromJson((JSONObject) data)) {
+                            tile.draw(g2d);
+                        }
                     }
+                }catch (Exception e){
+                    e.printStackTrace();
                 }
             }
         }
@@ -343,6 +368,47 @@ public class Client extends JFrame implements KeyListener, MouseListener {
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             doDraw((Graphics2D) g);
+        }
+
+        @Override
+        public void keyTyped(KeyEvent e) {
+            client.keyTyped(e);
+        }
+
+        @Override
+        public void keyPressed(KeyEvent e) {
+            client.keyPressed(e);
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) {
+            client.keyReleased(e);
+        }
+
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            client.mouseClicked(e);
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+            client.mousePressed(e);
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            client.mouseReleased(e);
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+
+            client.mouseEntered(e);
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+            client.mouseExited(e);
         }
     }
 }

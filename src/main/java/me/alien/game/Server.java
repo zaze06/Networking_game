@@ -1,17 +1,21 @@
 package me.alien.game;
 
+import me.alien.game.map.Tile;
 import me.alien.game.util.*;
 import me.alien.game.util.Client;
 import me.alien.game.util.data.DisplayData;
+import me.alien.game.util.data.Movement;
 import me.alien.game.util.data.display.DataRectangle;
 import me.alien.game.util.data.display.DataString;
 import org.json.JSONObject;
+
 
 import java.awt.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import static me.alien.game.Game.VERSION;
 
@@ -19,16 +23,86 @@ public class Server {
     private static final ArrayList<Client> clients = new ArrayList<>();
     ServerSocket serverSocket;
     private static final ArrayList<Pair<Integer, Data>> dataOut = new ArrayList<>();
+    private static ArrayList<Tile> map = new ArrayList<>();
 
     // TODO: Make a game.
 
-    public Server(){
-        try{
+    public Server() {
+        try {
             serverSocket = new ServerSocket(3030);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             System.exit(20);
         }
+        //map.add(new Tile(false, 0,0, Color.darkGray, false));
+        Tile[][] map;
+        //while (true){
+            Maze maze = new Maze(5,10);
+            maze.solve();
+
+            int[][] mapI = maze.toIntArray();
+
+            map = Map.fromIntArray(mapI);
+            /*GraphBuilder<Tile, Integer> graphBuilder = GraphBuilder.create();
+            for (int x = 0; x < map.length; x++) {
+                for (int y = 0; y < map[x].length; y++) {
+                    try {
+                        if (map[x][y + 1].isWalkable()) {
+                            graphBuilder = graphBuilder.connect(map[x][y]).to(map[x][y + 1]).withEdge(1);
+                        }
+                    } catch (IndexOutOfBoundsException e) {
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                    try {
+                        if (map[x][y - 1].isWalkable()) {
+                            graphBuilder = graphBuilder.connect(map[x][y]).to(map[x][y - 1]).withEdge(1);
+                        }
+                    } catch (IndexOutOfBoundsException e) {
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                    try {
+                        if (map[x + 1][y].isWalkable()) {
+                            graphBuilder = graphBuilder.connect(map[x][y]).to(map[x + 1][y]).withEdge(1);
+                        }
+                    } catch (IndexOutOfBoundsException e) {
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                    try {
+                        if (map[x - 1][y].isWalkable()) {
+                            graphBuilder = graphBuilder.connect(map[x][y]).to(map[x - 1][y]).withEdge(1);
+                        }
+                    } catch (IndexOutOfBoundsException e) {
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                }
+            }
+            //System.out.println(graphBuilder);
+            HipsterDirectedGraph<Tile, Integer> graph = graphBuilder.createDirectedGraph();
+            SearchProblem p = GraphSearchProblem
+                    .startingFrom(map[0][0])
+                    .in(graph)
+                    .takeCostsFromEdges()
+                    .build();
+
+            Algorithm.SearchResult search = Hipster.createBellmanFord(p).search(map[5][5]);
+            if (!search.getOptimalPaths().isEmpty()) {
+                StringBuilder out = new StringBuilder();
+                for(int[] ints : mapI){
+                    out.append(Arrays.toString(ints)+"\n");
+                }
+                System.out.println(out);
+                break;
+            }
+        }*/
+        for (Tile[] tiles : map) {
+            Server.map.addAll(Arrays.asList(tiles));
+        }
+
+
         ClientAcceptThread clientAcceptThread = new ClientAcceptThread();
         clientAcceptThread.start();
         ClientSendThread clientSendThread = new ClientSendThread();
@@ -37,7 +111,18 @@ public class Server {
     }
 
     public static void remove(Client client) {
+        clients.remove(client);
+        map.remove(client.getPlayer());
         dataOut.add(new Pair<>(client.getID(), new Data(Operation.CHAT, client.getName()+" Has disconnected")));
+        System.out.println("client id "+client.getID()+" ip "+client.getSocket().getInetAddress().getHostAddress()+" have left");
+    }
+
+    public static void move(Client client, JSONObject data) {
+        map = Movement.move(map, client, data);
+        dataOut.add(new Pair<>(-1, Map.sendData(map)));
+        synchronized (dataOut) {
+            dataOut.notifyAll();
+        }
     }
 
     private class ClientAcceptThread extends Thread{
@@ -77,7 +162,9 @@ public class Server {
                         System.out.println("New client added ip: "+client.getSocket().getInetAddress().toString()+" name: "+client.getName());
                         client.send(new Data(Operation.CHAT, "\"" + "Welcome " + name + ". The game will start soon\"").toString());
                         client.send(new Data(Operation.DISPLAY_DATA, new TimedPair<>(-1, new JSONObject(new DataString(0,10,"Connected!", Color.BLACK).toString()), 10).toString()).toString());
-                        client.send(new Data(Operation.DISPLAY_DATA, new Pair<Integer, DisplayData>(0, new DataRectangle(0,10,client.getHp()*10,10, Color.red, true)).toString()).toString());
+                        client.send(new Data(Operation.DISPLAY_DATA, new Pair<Integer, DisplayData>(0, new DataRectangle(0,10,client.getPlayer().getHp()*10,10, Color.red, true)).toString()).toString());
+                        map.add(client.getPlayer());
+                        client.send(Map.sendData(map).toString());
 
                         dataOut.add(new Pair<>(id, new Data(Operation.CHAT, "\"" + name + " have joined the game\"")));
                         synchronized (dataOut){

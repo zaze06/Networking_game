@@ -8,4 +8,6 @@ public class Operation {
     public static final int ERROR = 4;
     public static final int SUCCESS = 5;
     public static final int DISPLAY_DATA = 6;
+    public static final int MOVEMENT_DATA = 7;
+    public static final int EXIT = 8;
 }
