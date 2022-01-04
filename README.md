@@ -34,3 +34,12 @@ Well I wanted to make a game me  and my siblings can play (Doesn't mean you can'
         1. open a command prompt in sad directory by following the second step in [How to play](https://github.com/zaze06/Networking_game#how-to-play)
         2. run `./gradlew build` or `gradlew build`. Note you might need to run `chmod +x ./gradlew` to make it executable
 4. now you will have a jar called `game-<version>.jar` in `build/libs/` folder. note <version> is the curent version of the game
+##TODO
+- [X] Make client and server talk and send valid data
+- [X] Send the map to the client
+- [X] Send movment data to server
+- [X] Update map on movment from any client
+- [X] Shorten the map data packet
+- [ ] Make the chat work
+- [ ] Generate new maze when all players ar done(or generate a new one for the player that compleated the curent maze)
+- [ ] Setup a account system(might not hapen at all)
