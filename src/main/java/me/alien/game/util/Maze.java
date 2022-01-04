@@ -296,11 +296,9 @@ public class Maze {
         for (int y = 0; y < gridDimensionY; y++) {
             for (int x = 0; x < gridDimensionX; x++) {
                 out[x][y] = (grid[x][y]==wallChar?1:0);
-                if(x == gridDimensionX-1 && y == gridDimensionY-1){
-                    out[x][y] = 2;
-                }
             }
         }
+        out[gridDimensionX-1][gridDimensionY-1] = 2;
         return out;
     }
 

@@ -90,6 +90,7 @@ public class Client {
                     }
                     //System.out.println("received: "+e+" on client id "+ID);
                     if((new JSONObject(e)).getInt("operation") == Operation.EXIT){
+                        out.println(new Data(Operation.EXIT, new JSONString("good bay").toString()));
                         Server.remove(client);
                         socket.close();
                         return;
@@ -131,7 +132,7 @@ public class Client {
                         return;
                     }
                     out.println(dataOut.get(0));
-                    System.out.println("Sending data: "+dataOut.get(0)+". To "+socket.getInetAddress().getHostAddress()+" whit name: "+name+". Client id"+ID);
+                    //System.out.println("Sending data: "+dataOut.get(0)+". To "+socket.getInetAddress().getHostAddress()+" whit name: "+name+". Client id"+ID);
                     dataOut.remove(0);
                 }catch (Exception e){
                     System.out.println("ReceiveThread.run exception\n" + e);

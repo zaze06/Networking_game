@@ -4,6 +4,7 @@ import me.alien.game.map.Tile;
 import me.alien.game.util.*;
 import me.alien.game.util.data.DisplayData;
 import me.alien.game.util.data.Movement;
+import me.alien.game.util.data.display.DataMap;
 import org.json.JSONObject;
 
 import javax.swing.*;
@@ -82,6 +83,7 @@ public class Client extends JFrame {
             //chatText.setEnabled(false);
             //chatText.setM
             chatText.append("Chat started\n");
+            chatText.setFocusable(false);
             //this.setComponentZOrder(chatText, 0);
             //chatText
 
@@ -90,14 +92,20 @@ public class Client extends JFrame {
 
             add(display, BorderLayout.CENTER);
             add(chatText, BorderLayout.EAST);
+            display.requestFocus();
             setName("Game");
             setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-            /*addWindowListener(new WindowAdapter() {
+            addWindowListener(new WindowAdapter() {
                 public void windowClosing(WindowEvent e) {
                     out.println(new Data(Operation.EXIT, new JSONString("Exiting").toString()));
+                    try {
+                        in.readLine();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
                 }
-            });*/
+            });
 
             setVisible(true);
 
@@ -131,6 +139,7 @@ public class Client extends JFrame {
     }
 
     public void keyPressed(KeyEvent e) {
+        System.out.println("key pressed: "+e.getKeyCode());
         dataOut.add(new Data(Operation.MOVEMENT_DATA, Movement.fromKey(e.getKeyCode(), 1).toString()).toString());
         synchronized (dataOut) {
             dataOut.notifyAll();
@@ -229,10 +238,31 @@ public class Client extends JFrame {
                         }
 
 
-                    } else {
+                    } else if(data.getInt("operation") == Operation.TILE_DATA) {
+                        JSONObject data1 = data.getJSONObject("data");
+                        JSONObject map = data1.getJSONObject("value").getJSONObject("data");
+                        JSONObject out = new JSONObject();
+                        int max = map.getInt("size");
+                        out.put("size", max);
+                        for(int i = 0; i < max; i++){
+                            String tile = map.getString("tile"+i);
+                            out.put("tile"+i, new JSONObject(Tile.fromData(tile.toCharArray()).toString(0,0)));
+                        }
+                        boolean found = false;
+                        for (int j = 0; j < display.displayDataIn.size(); j++) {
+                            Pair<Integer, JSONObject> displayData = display.displayDataIn.get(j);
+                            if (displayData.getKey() == data1.getInt("key")) {
+                                display.displayDataIn.set(j, new Pair<>(data1.getInt("key"), new JSONObject(new DataMap(out, 0, 20).toString())));
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found) {
+                            display.displayDataIn.add(new Pair<>(data1.getInt("key"), new JSONObject(new DataMap(out, 0, 20).toString())));
+                        }
+                    }else{
                         //System.out.println(data.toString());
                         dataIn.add(data);
-
                         synchronized (dataIn) {
                             dataIn.notifyAll();
                         }
@@ -255,6 +285,7 @@ public class Client extends JFrame {
                             dataOut.wait();
                         }
                     }
+                    System.out.println("sending: "+dataOut.get(0));
                     out.println(dataOut.get(0));
                     dataOut.remove(0);
                     exception = false;
@@ -300,6 +331,7 @@ public class Client extends JFrame {
         Timer dataTimer;
         ArrayList<Pair<Integer, JSONObject>> displayDataIn = new ArrayList<>();
         Client client;
+        Display display = this;
 
 
         public Display(int Delay, Client client){
@@ -309,6 +341,18 @@ public class Client extends JFrame {
             this.requestFocusInWindow();
             addKeyListener(this);
             addMouseListener(this);
+            addFocusListener(new FocusListener() {
+                @Override
+                public void focusGained(FocusEvent e) {
+                    addKeyListener(display);
+                    addMouseListener(display);
+                }
+
+                @Override
+                public void focusLost(FocusEvent e) {
+
+                }
+            });
             timer = new Timer(Delay, this);
             timer.start();
             dataTimer = new Timer(Delay, e -> {

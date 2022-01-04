@@ -3,7 +3,7 @@ package me.alien.game;
 import me.alien.game.util.Version;
 
 public class Game {
-    public static final Version VERSION = new Version("0.1");
+    public static final Version VERSION = new Version("0.2");
 
 
     public static void main(String[] args) {

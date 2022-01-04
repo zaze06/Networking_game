@@ -12,8 +12,8 @@ public class Data {
     @Override
     public String toString() {
         return "{" +
-                "\"operation\": " + operation +
-                ", \"data\": " + data +
+                "\"operation\":" + operation +
+                ",\"data\":"+ data +
                 '}';
     }
 }

@@ -56,102 +56,30 @@ public class Movement {
                 try {
                     Tile tile = Map.findTile(map, x, y - distance);
                     if (tile.isWalkable()) {
-                        if (tile instanceof Player) {
-                            newMap.add(new Tile(true, x, y, new ColorUIResource(238,238,238), true));
-                            client.getPlayer().addY(-distance);
-                        }else{
-                            if(tile.isEnd()){
-                                newMap.remove(tile);
-                                tile.addY(-distance);
-                                newMap.add(tile);
-                                client.getPlayer().addY(-distance);
-                            }else{
-                                newMap.remove(tile);
-                                newMap.add(new Tile(true, x, y, new ColorUIResource(238,238,238), true));
-                                client.getPlayer().addY(-distance);
-                            }
-                        }
-                    }
-                } catch (NoTileFoundException e) {
-                    if ((x <= width && x >= 0) && (y - distance <= height && y - distance >= 0)) {
                         client.getPlayer().addY(-distance);
                     }
-                }
+                } catch (NoTileFoundException e) { }
             } else if (direction == 1) {
                 try {
                     Tile tile = Map.findTile(map, x, y + distance);
                     if (tile.isWalkable()) {
-                        if (tile instanceof Player) {
-                            newMap.add(new Tile(true, x, y, new ColorUIResource(238,238,238), true));
-                            client.getPlayer().addY(distance);
-                        }else{
-                            if(tile.isEnd()){
-                                newMap.remove(tile);
-                                tile.addY(distance);
-                                newMap.add(tile);
-                                client.getPlayer().addY(distance);
-                            }else{
-                                newMap.remove(tile);
-                                newMap.add(new Tile(true, x, y, new ColorUIResource(238,238,238), true));
-                                client.getPlayer().addY(distance);
-                            }
-                        }
-                    }
-                } catch (NoTileFoundException e) {
-                    if ((x <= width && x >= 0) && (y + distance <= height && y + distance >= 0)) {
                         client.getPlayer().addY(distance);
                     }
-                }
+                } catch (NoTileFoundException e) {}
             } else if (direction == 2) {
                 try {
                     Tile tile = Map.findTile(map, x - distance, y);
                     if (tile.isWalkable()) {
-                        if (tile instanceof Player) {
-                            newMap.add(new Tile(true, x, y, new ColorUIResource(238,238,238), true));
-                            client.getPlayer().addX(-distance);
-                        }else{
-                            if(tile.isEnd()){
-                                newMap.remove(tile);
-                                tile.addX(-distance);
-                                newMap.add(tile);
-                                client.getPlayer().addX(-distance);
-                            }else{
-                                newMap.remove(tile);
-                                newMap.add(new Tile(true, x, y, new ColorUIResource(238,238,238), true));
-                                client.getPlayer().addX(-distance);
-                            }
-                        }
-                    }
-                } catch (NoTileFoundException e) {
-                    if ((x - distance <= width && x - distance >= 0) && (y <= height && y >= 0)) {
                         client.getPlayer().addX(-distance);
                     }
-                }
+                } catch (NoTileFoundException e) {}
             } else if (direction == 3) {
                 try {
                     Tile tile = Map.findTile(map, x + distance, y);
                     if (tile.isWalkable()) {
-                        if (tile instanceof Player) {
-                            newMap.add(new Tile(true, x, y, new ColorUIResource(238,238,238), true));
-                            client.getPlayer().addX(distance);
-                        }else{
-                            if(tile.isEnd()){
-                                newMap.remove(tile);
-                                tile.addX(distance);
-                                newMap.add(tile);
-                                client.getPlayer().addX(distance);
-                            }else{
-                                newMap.remove(tile);
-                                newMap.add(new Tile(true, x, y, new ColorUIResource(238,238,238), true));
-                                client.getPlayer().addX(distance);
-                            }
-                        }
-                    }
-                } catch (NoTileFoundException e) {
-                    if ((x + distance <= width && x + distance >= 0) && (y <= height && y >= 0)) {
                         client.getPlayer().addX(distance);
                     }
-                }
+                } catch (NoTileFoundException e) {}
             }
 
             return newMap;

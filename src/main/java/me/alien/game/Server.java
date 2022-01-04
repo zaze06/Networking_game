@@ -34,16 +34,31 @@ public class Server {
             e.printStackTrace();
             System.exit(20);
         }
+
+        /*Tile tile = new Tile(true, 0, 0, Color.red, false);
+        System.out.println(new Data(Operation.TILE_DATA, new JSONString(tile.toData()).toString()));
+        System.out.println(new Data(Operation.DISPLAY_DATA, tile.toString()));
+        System.out.println("tile from data: "+Tile.fromData(tile.toData(0, 20)).toString(0,0));
+        System.exit(0);*/
         //map.add(new Tile(false, 0,0, Color.darkGray, false));
         Tile[][] map;
         //while (true){
-            Maze maze = new Maze(5,10);
-            maze.solve();
+            //Maze maze = new Maze(5,10);
+            //maze.solve();
+        MazeGenerator maze = new MazeGenerator(17,17);
 
-            int[][] mapI = maze.toIntArray();
+        int[][] mapI = maze.getIntMaze();//maze.toIntArray();
 
-            map = Map.fromIntArray(mapI);
-            /*GraphBuilder<Tile, Integer> graphBuilder = GraphBuilder.create();
+        int x = (int) (Math.random() * mapI.length);
+        int y = (int) (Math.random() * mapI[x].length);
+        while(mapI[x][y] != 0){
+            x = (int) (Math.random() * mapI.length);
+            y = (int) (Math.random() * mapI[x].length);
+        }
+        mapI[x][y] = 2;
+
+        map = Map.fromIntArray(mapI);
+        /*GraphBuilder<Tile, Integer> graphBuilder = GraphBuilder.create();
             for (int x = 0; x < map.length; x++) {
                 for (int y = 0; y < map[x].length; y++) {
                     try {

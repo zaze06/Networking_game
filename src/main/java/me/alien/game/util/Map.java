@@ -25,9 +25,9 @@ public class Map {
             JSONObject dataMap = new JSONObject();
             dataMap.put("size", map.size());
             for (int i = 0; i < map.size(); i++) {
-                dataMap.put("tile" + i, new JSONObject(map.get(i).toString(0, 20)));
+                dataMap.put("tile" + i, map.get(i).toData());
             }
-            return new Data(Operation.DISPLAY_DATA, new Pair<>(1, new DataMap(dataMap, 0, 20)).toString());
+            return new Data(Operation.TILE_DATA, new Pair<>(1, new DataMap(dataMap, 0, 20)).toString());
         }catch (Exception e){
 
         }
