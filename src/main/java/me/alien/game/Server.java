@@ -35,87 +35,8 @@ public class Server {
             System.exit(20);
         }
 
-        /*Tile tile = new Tile(true, 0, 0, Color.red, false);
-        System.out.println(new Data(Operation.TILE_DATA, new JSONString(tile.toData()).toString()));
-        System.out.println(new Data(Operation.DISPLAY_DATA, tile.toString()));
-        System.out.println("tile from data: "+Tile.fromData(tile.toData(0, 20)).toString(0,0));
-        System.exit(0);*/
-        //map.add(new Tile(false, 0,0, Color.darkGray, false));
-        Tile[][] map;
-        //while (true){
-            //Maze maze = new Maze(5,10);
-            //maze.solve();
-        MazeGenerator maze = new MazeGenerator(17,17);
+        genNewMap();
 
-        int[][] mapI = maze.getIntMaze();//maze.toIntArray();
-
-        int x = (int) (Math.random() * mapI.length);
-        int y = (int) (Math.random() * mapI[x].length);
-        while(mapI[x][y] != 0){
-            x = (int) (Math.random() * mapI.length);
-            y = (int) (Math.random() * mapI[x].length);
-        }
-        mapI[x][y] = 2;
-
-        map = Map.fromIntArray(mapI);
-        /*GraphBuilder<Tile, Integer> graphBuilder = GraphBuilder.create();
-            for (int x = 0; x < map.length; x++) {
-                for (int y = 0; y < map[x].length; y++) {
-                    try {
-                        if (map[x][y + 1].isWalkable()) {
-                            graphBuilder = graphBuilder.connect(map[x][y]).to(map[x][y + 1]).withEdge(1);
-                        }
-                    } catch (IndexOutOfBoundsException e) {
-                    }catch (Exception e){
-                        e.printStackTrace();
-                    }
-                    try {
-                        if (map[x][y - 1].isWalkable()) {
-                            graphBuilder = graphBuilder.connect(map[x][y]).to(map[x][y - 1]).withEdge(1);
-                        }
-                    } catch (IndexOutOfBoundsException e) {
-                    }catch (Exception e){
-                        e.printStackTrace();
-                    }
-                    try {
-                        if (map[x + 1][y].isWalkable()) {
-                            graphBuilder = graphBuilder.connect(map[x][y]).to(map[x + 1][y]).withEdge(1);
-                        }
-                    } catch (IndexOutOfBoundsException e) {
-                    }catch (Exception e){
-                        e.printStackTrace();
-                    }
-                    try {
-                        if (map[x - 1][y].isWalkable()) {
-                            graphBuilder = graphBuilder.connect(map[x][y]).to(map[x - 1][y]).withEdge(1);
-                        }
-                    } catch (IndexOutOfBoundsException e) {
-                    }catch (Exception e){
-                        e.printStackTrace();
-                    }
-                }
-            }
-            //System.out.println(graphBuilder);
-            HipsterDirectedGraph<Tile, Integer> graph = graphBuilder.createDirectedGraph();
-            SearchProblem p = GraphSearchProblem
-                    .startingFrom(map[0][0])
-                    .in(graph)
-                    .takeCostsFromEdges()
-                    .build();
-
-            Algorithm.SearchResult search = Hipster.createBellmanFord(p).search(map[5][5]);
-            if (!search.getOptimalPaths().isEmpty()) {
-                StringBuilder out = new StringBuilder();
-                for(int[] ints : mapI){
-                    out.append(Arrays.toString(ints)+"\n");
-                }
-                System.out.println(out);
-                break;
-            }
-        }*/
-        for (Tile[] tiles : map) {
-            Server.map.addAll(Arrays.asList(tiles));
-        }
 
 
         ClientAcceptThread clientAcceptThread = new ClientAcceptThread();
@@ -135,6 +56,40 @@ public class Server {
     public static void move(Client client, JSONObject data) {
         map = Movement.move(map, client, data);
         dataOut.add(new Pair<>(-1, Map.sendData(map)));
+        synchronized (dataOut) {
+            dataOut.notifyAll();
+        }
+    }
+
+    public static void genNewMap() {
+        Tile[][] map;
+
+        MazeGenerator maze = new MazeGenerator(35,35);
+
+        int[][] mapI = maze.getIntMaze();//maze.toIntArray();
+
+        int x = (int) (Math.random() * mapI.length);
+        int y = (int) (Math.random() * mapI[x].length);
+        while(mapI[x][y] != 0){
+            x = (int) (Math.random() * mapI.length);
+            y = (int) (Math.random() * mapI[x].length);
+        }
+        mapI[x][y] = 2;
+
+        map = Map.fromIntArray(mapI);
+
+        Server.map.clear();
+
+        for (Tile[] tiles : map) {
+            Server.map.addAll(Arrays.asList(tiles));
+        }
+        for(Client client : clients){
+            client.getPlayer().setPos(10,10);
+            Server.map.add(client.getPlayer());
+        }
+
+
+        dataOut.add(new Pair<>(-1, Map.sendData(Server.map)));
         synchronized (dataOut) {
             dataOut.notifyAll();
         }

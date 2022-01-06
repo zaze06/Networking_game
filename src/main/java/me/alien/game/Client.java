@@ -140,7 +140,10 @@ public class Client extends JFrame {
 
     public void keyPressed(KeyEvent e) {
         System.out.println("key pressed: "+e.getKeyCode());
-        dataOut.add(new Data(Operation.MOVEMENT_DATA, Movement.fromKey(e.getKeyCode(), 1).toString()).toString());
+        String key = Movement.fromKey(e.getKeyCode(), 1).toString();
+        if(!dataOut.contains(key)) {
+            dataOut.add(key);
+        }
         synchronized (dataOut) {
             dataOut.notifyAll();
         }
@@ -204,67 +207,69 @@ public class Client extends JFrame {
                     }
                     String dataRaw = dataInRaw.get(0);
                     dataInRaw.remove(0);
-                    JSONObject data = new JSONObject(dataRaw);
-                    if (data.getInt("operation") == Operation.DISPLAY_DATA) {
+                    if(dataRaw != null) {
+                        JSONObject data = new JSONObject(dataRaw);
+                        if (data.getInt("operation") == Operation.DISPLAY_DATA) {
 
-                        JSONObject data1 = data.getJSONObject("data");
-                        if (data1.getInt("pairID") == 0) {
+                            JSONObject data1 = data.getJSONObject("data");
+                            if (data1.getInt("pairID") == 0) {
+                                boolean found = false;
+                                for (int i = 0; i < display.displayDataIn.size(); i++) {
+                                    Pair<Integer, JSONObject> displayData = display.displayDataIn.get(i);
+                                    if (displayData.getKey() == data1.getInt("key")) {
+                                        display.displayDataIn.set(i, new Pair<>(data1.getInt("key"), data1.getJSONObject("value")));
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (!found) {
+                                    display.displayDataIn.add(new Pair<>(data1.getInt("key"), data1.getJSONObject("value")));
+                                }
+
+                            } else if (data1.getInt("pairID") == 1) {
+                                boolean found = false;
+                                for (int i = 0; i < display.displayDataIn.size(); i++) {
+                                    Pair<Integer, JSONObject> displayData = display.displayDataIn.get(i);
+                                    if (displayData.getKey() == data1.getInt("key")) {
+                                        display.displayDataIn.set(i, new TimedPair<>(data1.getInt("key"), data1.getJSONObject("value"), Instant.parse(data1.getString("time"))));
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (!found) {
+                                    display.displayDataIn.add(new TimedPair<>(data1.getInt("key"), data1.getJSONObject("value"), Instant.parse(data1.getString("time"))));
+                                }
+                            }
+
+
+                        } else if (data.getInt("operation") == Operation.TILE_DATA) {
+                            JSONObject data1 = data.getJSONObject("data");
+                            JSONObject map = data1.getJSONObject("value").getJSONObject("data");
+                            JSONObject out = new JSONObject();
+                            int max = map.getInt("size");
+                            out.put("size", max);
+                            for (int i = 0; i < max; i++) {
+                                String tile = map.getString("tile" + i);
+                                out.put("tile" + i, new JSONObject(Tile.fromData(tile.toCharArray()).toString(0, 0)));
+                            }
                             boolean found = false;
-                            for (int i = 0; i < display.displayDataIn.size(); i++) {
-                                Pair<Integer, JSONObject> displayData = display.displayDataIn.get(i);
+                            for (int j = 0; j < display.displayDataIn.size(); j++) {
+                                Pair<Integer, JSONObject> displayData = display.displayDataIn.get(j);
                                 if (displayData.getKey() == data1.getInt("key")) {
-                                    display.displayDataIn.set(i, new Pair<>(data1.getInt("key"), data1.getJSONObject("value")));
+                                    display.displayDataIn.set(j, new Pair<>(data1.getInt("key"), new JSONObject(new DataMap(out, 0, 20).toString())));
                                     found = true;
                                     break;
                                 }
                             }
                             if (!found) {
-                                display.displayDataIn.add(new Pair<>(data1.getInt("key"), data1.getJSONObject("value")));
+                                display.displayDataIn.add(new Pair<>(data1.getInt("key"), new JSONObject(new DataMap(out, 0, 20).toString())));
                             }
-
-                        } else if (data1.getInt("pairID") == 1) {
-                            boolean found = false;
-                            for (int i = 0; i < display.displayDataIn.size(); i++) {
-                                Pair<Integer, JSONObject> displayData = display.displayDataIn.get(i);
-                                if (displayData.getKey() == data1.getInt("key")) {
-                                    display.displayDataIn.set(i, new TimedPair<>(data1.getInt("key"), data1.getJSONObject("value"), Instant.parse(data1.getString("time"))));
-                                    found = true;
-                                    break;
-                                }
+                        } else {
+                            //System.out.println(data.toString());
+                            dataIn.add(data);
+                            synchronized (dataIn) {
+                                dataIn.notifyAll();
                             }
-                            if (!found) {
-                                display.displayDataIn.add(new TimedPair<>(data1.getInt("key"), data1.getJSONObject("value"), Instant.parse(data1.getString("time"))));
-                            }
-                        }
-
-
-                    } else if(data.getInt("operation") == Operation.TILE_DATA) {
-                        JSONObject data1 = data.getJSONObject("data");
-                        JSONObject map = data1.getJSONObject("value").getJSONObject("data");
-                        JSONObject out = new JSONObject();
-                        int max = map.getInt("size");
-                        out.put("size", max);
-                        for(int i = 0; i < max; i++){
-                            String tile = map.getString("tile"+i);
-                            out.put("tile"+i, new JSONObject(Tile.fromData(tile.toCharArray()).toString(0,0)));
-                        }
-                        boolean found = false;
-                        for (int j = 0; j < display.displayDataIn.size(); j++) {
-                            Pair<Integer, JSONObject> displayData = display.displayDataIn.get(j);
-                            if (displayData.getKey() == data1.getInt("key")) {
-                                display.displayDataIn.set(j, new Pair<>(data1.getInt("key"), new JSONObject(new DataMap(out, 0, 20).toString())));
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found) {
-                            display.displayDataIn.add(new Pair<>(data1.getInt("key"), new JSONObject(new DataMap(out, 0, 20).toString())));
-                        }
-                    }else{
-                        //System.out.println(data.toString());
-                        dataIn.add(data);
-                        synchronized (dataIn) {
-                            dataIn.notifyAll();
                         }
                     }
                 }catch (Exception e){
@@ -299,6 +304,7 @@ public class Client extends JFrame {
         }
     }
 
+    //max 39
     public class ChatThread extends Thread{
         @Override
         public void run() {

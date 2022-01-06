@@ -72,8 +72,6 @@ public class Tile {
 
     public char[] toData(int xOffset, int yOffset){
         ArrayList<Character> out = new ArrayList<>();
-        out.add((char) 0x21);
-        out.add((char) 0x30);
         out.add((char) 0x26);
         out.add((char) (X_POSITION + (x+xOffset)));
         out.add((char) 0x23);
@@ -129,5 +127,10 @@ public class Tile {
                 ",\"walkable\":" + walkable +
                 ",\"color\":" + color.getRGB() +
                 "}";
+    }
+
+    public void setPos(int x, int y) {
+        this.x = x;
+        this.y = y;
     }
 }

@@ -7,6 +7,7 @@ import org.json.JSONObject;
 
 import javax.swing.plaf.ColorUIResource;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -94,10 +95,16 @@ public class Client {
                         Server.remove(client);
                         socket.close();
                         return;
-                    }
-                    dataIn.add(e);
-                    synchronized (dataIn) {
-                        dataIn.notifyAll();
+                    }else if((new JSONObject(e)).getInt("operation") == Operation.KEY_DATA){
+                        int key = (new JSONObject(e)).getInt("data");
+                        if(key == KeyEvent.VK_N){
+                            Server.genNewMap();
+                        }
+                    }else{
+                        dataIn.add(e);
+                        synchronized (dataIn) {
+                            dataIn.notifyAll();
+                        }
                     }
                     exception = false;
                 }catch (Exception e){

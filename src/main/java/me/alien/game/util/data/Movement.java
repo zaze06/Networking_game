@@ -4,7 +4,9 @@ import me.alien.game.exception.NoTileFoundException;
 import me.alien.game.map.Player;
 import me.alien.game.map.Tile;
 import me.alien.game.util.Client;
+import me.alien.game.util.Data;
 import me.alien.game.util.Map;
+import me.alien.game.util.Operation;
 import org.json.JSONObject;
 
 import javax.swing.plaf.ColorUIResource;
@@ -33,14 +35,16 @@ public class Movement {
                 case KeyEvent.VK_RIGHT:
                     mode = 3;
                     break;
+                default:
+                    return new Data(Operation.KEY_DATA, key).toJSON();
             }
             out.put("direction", mode);
             out.put("length", distance * 10);
-            return out;
+            return new Data(Operation.MOVEMENT_DATA, out.toString()).toJSON();
         }catch (Exception e){
             e.printStackTrace();
         }
-        return null;
+        return new Data(Operation.KEY_DATA, key).toJSON();
     }
 
     public static ArrayList<Tile> move(ArrayList<Tile> map, Client client, JSONObject data){

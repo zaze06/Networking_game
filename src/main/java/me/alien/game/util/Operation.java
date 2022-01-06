@@ -11,4 +11,5 @@ public class Operation {
     public static final int MOVEMENT_DATA = 7;
     public static final int EXIT = 8;
     public static final int TILE_DATA = 9;
+    public static final int KEY_DATA = 10;
 }
